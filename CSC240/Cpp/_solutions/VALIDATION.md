@@ -1,0 +1,26 @@
+# Validation Log — CSC240 / C++
+
+Toolchain: Apple clang 21.0.0 (libc++) invoked as `g++ -std=c++17 -Wall` (plus `-fsanitize=address -g` where the README requires it), macOS arm64. Every buggy and corrected program was compiled and run with the README's sample input under a 5-second timeout. All corrected programs compile with zero warnings. Binaries were built in a scratch directory; none remain in the tree.
+
+| Module | Activity | Source file | Bug type(s) | Buggy symptom confirmed? | Fixed output confirmed? | Method |
+|---|---|---|---|---|---|---|
+| Module00-Introduction-to-Cpp | debug01 | `welcome_badge.cpp` | logic, paradigm-specific (stream input) | Yes: second prompt not awaited, `Hello, Ada! (junior visitor)`, `Age: 0` | Yes: `Hello, Ada Lovelace!`, `Age: 36`, box aligned | executed |
+| Module01-OOP-in-Cpp-and-Virtual-Functions | debug01 | `staff_payroll.cpp` | logic, paradigm-specific (static dispatch) | Yes: Manager 7500.00, Intern 0.00, total 12500.00 | Yes: 5000 / 8000 / 1440, total 14440.00 | executed |
+| Module01-OOP-in-Cpp-and-Virtual-Functions | debug02 | `shape_registry.cpp` | logic, paradigm-specific (virtual call in constructor) | Yes: both register as "generic shape" while `kind()` later prints circle/rectangle | Yes: `Registered a circle` / `rectangle`, matching names, areas 12.57 / 12.00 | executed |
+| Module01-OOP-in-Cpp-and-Virtual-Functions | debug03 | `session_log.cpp` | runtime (resource leak), paradigm-specific (non-virtual destructor) | Yes: `-Wdelete-non-abstract-non-virtual-dtor` warning at 73:9; no `[free]` lines printed | Yes: `[free]` precedes `[close]` for maria and devin | executed |
+| Module02-Memory-Management | debug01 | `score_list.cpp` | runtime (use-after-free / double free), conceptual (Rule of Three) | Yes: ASan heap-use-after-free, READ of size 4 in `ScoreList::get` line 25 from `main` line 65; freed by `~ScoreList` line 21 via `main` line 60; allocated line 12 via `main` line 53 | Yes: Curved 93 97 80 100, Backup 88 92 75 100, no ASan report | executed |
+| Module02-Memory-Management | debug02 | `ticket_block.cpp` | runtime (mismatched deallocation), paradigm-specific | Yes: one `[returned] seat 14 (Omar)` line, then ASan "attempting free on address which was not malloc()-ed" at `release_block` line 47, "16 bytes inside of 112-byte region" allocated at line 37 | Yes: three `[returned]` lines in order 16, 15, 14, then `All seats returned.` | executed |
+| Module02-Memory-Management | debug03 | `honor_roll.cpp` | runtime (dangling pointer), conceptual (invalidation on reallocation) | Yes: after `Added Marcus (roster size 2)`, ASan heap-use-after-free READ of size 8 at `main` line 46, freed by `push_back` at line 42 | Yes: six adds, honor roll Marcus/Priya/Sofia, `Top student: Marcus with GPA 3.9` | executed |
+| Module03-Cpp-STL-and-Operator-Overloading | debug01 | `book_catalog.cpp` | logic, conceptual (ordering defines equivalence) | Yes: `Skipped Learn Prolog Now (2005)`, catalog has 4 titles | Yes: 5 added, 1 skipped, 5 titles with both 2005 books | executed |
+| Module03-Cpp-STL-and-Operator-Overloading | debug02 | `money.cpp` | syntax/compile (member `operator<<`), logic (mutating `operator+`) | Yes: `money.cpp:57:34: error: invalid operands to binary expression`, "6 errors generated" | Yes: Coffee $3.75 … Total $6.72, Two coffees $7.50, "at least as much" | executed |
+| Module03-Cpp-STL-and-Operator-Overloading | debug03 | `parts_inventory.cpp` | logic, conceptual (`map[]` inserts; `remove` does not erase) | Yes: `-Wunused-result` nodiscard warning at 28:5; 4 parts incl. `gasket 0`; `Pending orders (5): 102 117 130 0 130` | Yes: 3 parts, `Pending orders (3): 102 117 130` | executed |
+
+Executed: 10 of 10. Desk-checked only: 0.
+
+## Notes and items the lead may want to double-check
+
+- Blueprint substitutions (B4): M1 debug02 uses "virtual call from a base-class constructor" (listed in B4 under (c)) instead of the initializer-list-order bug listed under (b); the two remaining M1 slots use the B4 (a) and (c) bugs. M3 debug01 uses an `operator<` that compares only one field (so two distinct books are equivalent to the set) rather than the literal `<=` bug; SOLUTION.md discusses `<=` as the tempting wrong fix.
+- `session_log.cpp` (M1 debug03): deleting a derived object through a base pointer with a non-virtual destructor is formally undefined behavior. The observable symptom (derived destructor skipped, `[free]` lines missing) is what every mainstream compiler produces, and `-Wall` emits a warning naming the problem, so no sanitizer flag was added. Flagging per A9's UB rule.
+- `money.cpp` (M3 debug02): the second bug (mutating `operator+`) is only observable after the compile error is fixed; the SOLUTION's intermediate output was verified by compiling the corrected `operator<<` with the original `operator+`.
+- The three ASan activities (M2) print correct output without the sanitizer only by luck; their READMEs make `-fsanitize=address` mandatory and say what to expect without it.
+- Error-type mix for this tree by primary type: compile 1 (10 %), runtime 4 (40 %), logic/boundary 5 (50 %); every activity also carries a conceptual/paradigm label. Runtime is slightly above A7's 20–30 % band because Module 2 (memory management) is inherently a runtime-error module.
