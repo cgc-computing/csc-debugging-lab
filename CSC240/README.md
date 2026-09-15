@@ -11,4 +11,4 @@ CSC240 introduces students who already know Java (CSC110/CSC205) to four new lan
 
 **Total: 36 activities.** Each language index lists its modules, activity counts, and a topic tag per activity.
 
-Solutions, corrected sources, and validation logs live in each language's `_solutions/` folder.
+Solutions, corrected sources, and validation logs live in each language's `_solutions/` folder and are for instructors only.
